@@ -17,7 +17,6 @@ import pandas as pd
 import numpy as np
 import joblib
 import os
-import time
 import plotly.graph_objects as go
 import plotly.express as px
 from datetime import datetime
@@ -508,7 +507,6 @@ if page == "🔍 Single Transaction":
         )
 
         with st.spinner("Scoring transaction…"):
-            time.sleep(0.4)   # small delay for UX realism
             result = predict(artifacts, inputs, threshold)
 
         if "error" in result:
