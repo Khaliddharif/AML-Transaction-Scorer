@@ -230,12 +230,34 @@ def predict(artifacts: dict, inputs: dict, threshold: float = 0.40) -> dict:
     amount_r = inputs["amount_received"]
     amount_p = inputs["amount_paid"]
 
+    # Cyclical encodings expected by the trained model.
+    hour_sin = float(np.sin(2 * np.pi * hour / 24))
+    hour_cos = float(np.cos(2 * np.pi * hour / 24))
+    month_sin = float(np.sin(2 * np.pi * inputs["month"] / 12))
+    month_cos = float(np.cos(2 * np.pi * inputs["month"] / 12))
+    day_sin = float(np.sin(2 * np.pi * day / 31))
+    day_cos = float(np.cos(2 * np.pi * day / 31))
+
+    # Fallback operational features for real-time scoring when aggregate history
+    # stats are not supplied by upstream transaction profiling systems.
+    sender_tx_count = int(max(inputs["from_fraud_hist"] * 12 + 1, 1))
+    sender_avg_amount = float(amount_r)
+    sender_std_amount = float(max(amount_r * 0.15, 1.0))
+    amount_zscore = float((amount_r - sender_avg_amount) / sender_std_amount)
+    unique_bank_connections = int(max(inputs["pair_fraud_hist"] + 1, 1))
+
     features = {
         "Amount Received":         amount_r,
         "Receiving Currency":      int(le_cur.transform([inputs["recv_currency"]])[0]),
         "Amount Paid":             amount_p,
         "Payment Currency":        int(le_cur.transform([inputs["pay_currency"]])[0]),
         "Payment Format":          int(le_fmt.transform([inputs["pay_format"]])[0]),
+        "hour_sin":                hour_sin,
+        "hour_cos":                hour_cos,
+        "month_sin":               month_sin,
+        "month_cos":               month_cos,
+        "day_sin":                 day_sin,
+        "day_cos":                 day_cos,
         "Hour":                    hour,
         "Day":                     day,
         "Weekday":                 weekday,
@@ -246,12 +268,18 @@ def predict(artifacts: dict, inputs: dict, threshold: float = 0.40) -> dict:
         "Amount_Diff":             abs(amount_p - amount_r),
         "From_Bank_Fraud_History": inputs["from_fraud_hist"],
         "Bank_Pair_Fraud_History": inputs["pair_fraud_hist"],
+        "Sender_Tx_Count":         sender_tx_count,
+        "Sender_Avg_Amount":       sender_avg_amount,
+        "Sender_Std_Amount":       sender_std_amount,
+        "Amount_ZScore":           amount_zscore,
+        "Unique_Bank_Connections": unique_bank_connections,
         "From_Bank_Code":          from_code,
         "To_Bank_Code":            to_code,
         "Bank_Pair_Code":          pair_code,
     }
 
-    row        = pd.DataFrame([features])[feat_cols]
+    # Tolerant alignment: keeps scoring stable if model artifacts evolve.
+    row = pd.DataFrame([features]).reindex(columns=feat_cols, fill_value=0)
     row_scaled = scaler.transform(row)
     proba      = float(clf.predict_proba(row_scaled)[0][1])
     pred       = int(proba >= threshold)
