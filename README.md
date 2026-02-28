@@ -62,62 +62,6 @@ aml-fraud-detection/
     └── aml_model_name.joblib
 ```
 
----
-
-## 🚀 Quick Start — Run Locally
-
-### Prerequisites
-- Python 3.9–3.11
-- Git
-- VSCode (recommended)
-
-### Step 1 — Clone the repository
-```bash
-git clone https://github.com/YOUR_USERNAME/aml-fraud-detection.git
-cd aml-fraud-detection
-```
-
-### Step 2 — Create a virtual environment
-```bash
-# Windows
-python -m venv venv
-venv\Scripts\activate
-
-# macOS / Linux
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### Step 3 — Install dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### Step 4 — Generate model artifacts
-Open `GP_AML_Khalid_Dharif_v2.ipynb` in Kaggle (or Jupyter) and run all cells.  
-The notebook saves `.joblib` files — move them into a `models/` folder in the project root.
-
-### Step 5 — Run the app
-```bash
-streamlit run app.py
-```
-Open your browser at **http://localhost:8501**
-
----
-
-## ☁️ Deploy to Streamlit Community Cloud (Free)
-
-1. Push this repository to GitHub (see guide below)
-2. Go to [streamlit.io/cloud](https://streamlit.io/cloud) → **Sign in with GitHub**
-3. Click **New App**
-4. Select your repository, branch `main`, file `app.py`
-5. Click **Deploy** — your app will be live in ~2 minutes
-
-> ⚠️ Make sure your `models/` folder with all `.joblib` files is committed to GitHub.  
-> Large files (>100MB) must use [Git LFS](https://git-lfs.github.com/).
-
----
-
 ## 📊 Pipeline Summary
 
 ```
