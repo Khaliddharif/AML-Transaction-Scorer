@@ -17,6 +17,7 @@ import pandas as pd
 import numpy as np
 import joblib
 import os
+import traceback
 import plotly.graph_objects as go
 import plotly.express as px
 from datetime import datetime
@@ -99,6 +100,13 @@ def load_artifacts():
         }
     except FileNotFoundError as e:
         st.error(f"❌ Model artifact not found: {e}\n\nRun the notebook first to generate the `.joblib` files, then place them in a `models/` folder.")
+        st.stop()
+    except Exception as e:
+        st.error(
+            "❌ Failed to load model artifacts. This is usually a dependency/runtime mismatch in deployment.\n\n"
+            f"Error: {e}"
+        )
+        st.code(traceback.format_exc())
         st.stop()
 
 
