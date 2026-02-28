@@ -15,27 +15,12 @@ Deploy:
 import streamlit as st
 import pandas as pd
 import numpy as np
+import joblib
 import os
-import sys
-import subprocess
 import traceback
+import plotly.graph_objects as go
+import plotly.express as px
 from datetime import datetime
-
-try:
-    import joblib
-except ModuleNotFoundError:
-    # Cloud fallback: ensure joblib is available even when dependency install is incomplete.
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "joblib==1.4.2"])
-    import joblib
-
-try:
-    import plotly.graph_objects as go
-    import plotly.express as px
-except ModuleNotFoundError:
-    # Cloud fallback: ensure plotly is available even when dependency install is incomplete.
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "plotly==5.22.0"])
-    import plotly.graph_objects as go
-    import plotly.express as px
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE CONFIGURATION  (must be first Streamlit call)
