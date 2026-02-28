@@ -22,7 +22,7 @@ This project builds a complete, production-ready ML pipeline that detects suspic
 - New **Operations Dashboard** for live session monitoring and queue workload visibility
 
 ### Live Demo
-👉 [**Try the Streamlit App →**](https://your-app-name.streamlit.app)
+👉 [**Try the Streamlit App →**](http://localhost:8511/)
 
 ---
 
