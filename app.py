@@ -149,7 +149,14 @@ def build_alert_reasons(inputs: dict, features: dict, proba: float, threshold: f
     return reasons or ["No dominant risk driver detected by current features"]
 
 
-def compute_case_priority(proba: float, amount_diff: float, amount_received: float, from_hist: int, pair_hist: int) -> int:
+def compute_case_priority(
+    proba: float,
+    amount_diff: float,
+    amount_received: float,
+    from_hist: int,
+    pair_hist: int,
+    coverage_alert: bool = False,
+) -> int:
     """Return a 0-100 composite priority score for fraud operations triage."""
     ratio = amount_diff / max(amount_received, 1.0)
     score = (
@@ -158,6 +165,8 @@ def compute_case_priority(proba: float, amount_diff: float, amount_received: flo
         + min(from_hist / 10, 1.0) * 10
         + min(pair_hist / 10, 1.0) * 10
     )
+    if coverage_alert:
+        score += 12
     return int(round(min(max(score, 0), 100)))
 
 
@@ -210,9 +219,19 @@ def predict(artifacts: dict, inputs: dict, threshold: float = 0.40) -> dict:
     to_code   = int(le_to.transform([inputs["to_bank"]])[0])
     pair_str  = f"{from_code}-{to_code}"
 
-    if pair_str not in le_pair.classes_:
-        return {"error": f"Bank pair {inputs['from_bank']}→{inputs['to_bank']} not in training data."}
-    pair_code = int(le_pair.transform([pair_str])[0])
+    coverage_alert = False
+    coverage_note = ""
+    if pair_str in le_pair.classes_:
+        pair_code = int(le_pair.transform([pair_str])[0])
+    else:
+        # Business fallback: do not block scoring for new corridors.
+        # Use a neutral encoded value and force enhanced review downstream.
+        pair_code = 0
+        coverage_alert = True
+        coverage_note = (
+            f"New corridor {inputs['from_bank']}→{inputs['to_bank']} not seen in training. "
+            "Scored with fallback encoding and routed for analyst review."
+        )
 
     for val, le, field in [
         (inputs["recv_currency"], le_cur, "receiving_currency"),
@@ -290,13 +309,18 @@ def predict(artifacts: dict, inputs: dict, threshold: float = 0.40) -> dict:
     else:              risk, risk_color = "🔴 CRITICAL",  "#f44336"
 
     reasons = build_alert_reasons(inputs, features, proba, threshold)
+    if coverage_alert:
+        reasons.append("New bank corridor outside model training coverage")
     priority_score = compute_case_priority(
         proba=proba,
         amount_diff=features["Amount_Diff"],
         amount_received=features["Amount Received"],
         from_hist=features["From_Bank_Fraud_History"],
         pair_hist=features["Bank_Pair_Fraud_History"],
+        coverage_alert=coverage_alert,
     )
+    if coverage_alert:
+        priority_score = max(priority_score, 65)
     next_action, sla = recommend_case_action(priority_score)
 
     return {
@@ -310,6 +334,8 @@ def predict(artifacts: dict, inputs: dict, threshold: float = 0.40) -> dict:
         "queue":      queue_bucket(priority_score),
         "next_action": next_action,
         "sla":        sla,
+        "coverage_alert": coverage_alert,
+        "coverage_note": coverage_note,
     }
 
 
@@ -535,6 +561,8 @@ if page == "🔍 Single Transaction":
                 st.markdown(f'<div class="metric-card"><div class="metric-value">{is_risky}</div><div class="metric-label">Total Prior Frauds</div></div>', unsafe_allow_html=True)
 
             st.markdown("<br>", unsafe_allow_html=True)
+            if result.get("coverage_alert"):
+                st.warning(f"Coverage Alert: {result['coverage_note']}")
 
             q1, q2, q3 = st.columns(3)
             with q1:
@@ -579,6 +607,7 @@ if page == "🔍 Single Transaction":
                 "priority_score": result["priority_score"],
                 "next_action": result["next_action"],
                 "sla": result["sla"],
+                "coverage_alert": result["coverage_alert"],
                 "reasons": " | ".join(result["reasons"]),
             })
 
@@ -652,6 +681,7 @@ elif page == "📋 Batch Scoring":
                         "Queue": "Validation",
                         "Priority_Score": np.nan,
                         "SLA": "N/A",
+                        "Coverage_Alert": "N/A",
                         "Next_Action": "Correct input data and rescore",
                         "Reason_Codes": r["error"],
                     }
@@ -663,6 +693,7 @@ elif page == "📋 Batch Scoring":
                         "Queue": r["queue"],
                         "Priority_Score": r["priority_score"],
                         "SLA": r["sla"],
+                        "Coverage_Alert": "Yes" if r.get("coverage_alert") else "No",
                         "Next_Action": r["next_action"],
                         "Reason_Codes": " | ".join(r["reasons"]),
                     }
