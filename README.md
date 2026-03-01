@@ -22,7 +22,7 @@ This project builds a complete, production-ready ML pipeline that detects suspic
 - New **Operations Dashboard** for live session monitoring and queue workload visibility
 
 ### Live Demo
-👉 [**Try the Streamlit App →**](http://localhost:8511/)
+👉 [**Try the Streamlit App →**](https://aml-transaction-scorer-khalid-dharif.streamlit.app)
 
 ---
 
