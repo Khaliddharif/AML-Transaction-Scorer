@@ -1,7 +1,7 @@
-pandas==2.2.2
-numpy==1.26.4
-scikit-learn==1.6.1
-lightgbm==4.3.0
-streamlit==1.53.1
-plotly==5.22.0
-joblib==1.4.2
+pandas>=2.2,<3
+numpy>=2.0,<3
+scikit-learn>=1.6,<2
+lightgbm>=4.3,<5
+streamlit>=1.53,<2
+plotly>=5.22,<6
+joblib>=1.4,<2
