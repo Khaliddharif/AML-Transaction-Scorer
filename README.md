@@ -14,7 +14,7 @@
 Money laundering costs the global economy an estimated **$800 billion – $2 trillion/year** (UNODC).  
 This project builds a complete, production-ready ML pipeline that detects suspicious financial transactions using IBM's synthetic AML dataset (~500K transactions, ~0.2% fraud rate).
 
-### Fraud Operations Enhancements (2026-02-28)
+### Fraud Operations:
 - Policy-driven thresholding (`Aggressive Detection`, `Balanced`, `Precision Focus`)
 - Analyst-ready reason codes for each alert (why the model flagged a transaction)
 - Case triage outputs: `Priority Score`, `Queue (P1-P4)`, `Next Action`, and `SLA`
